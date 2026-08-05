@@ -10,4 +10,5 @@ public class UserRegistrationRequest {
 
     private String fullName;
     private String upiId;
+    private String password;
 }

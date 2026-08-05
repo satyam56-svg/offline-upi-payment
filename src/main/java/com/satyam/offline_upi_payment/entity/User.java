@@ -1,11 +1,9 @@
 package com.satyam.offline_upi_payment.entity;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Getter
 @Setter
@@ -19,4 +17,9 @@ public class User {
     private String fullName;
     private String upiId;
     private String publicKey;
+    private String password;
+
+    @JsonManagedReference
+    @OneToOne(mappedBy = "user")
+    private Wallet wallet;
 }
