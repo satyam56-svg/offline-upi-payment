@@ -7,10 +7,16 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PaymentRequest {
+public class EncryptedPayload {
 
     private String senderUpiId;
+
     private String receiverUpiId;
+
     private Double amount;
-    private String signature;
+
+    private String nonce;
+
+    private Long createdAt;
+
 }

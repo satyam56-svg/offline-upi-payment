@@ -29,5 +29,8 @@ public class Payment {
 
     private String status;
 
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String signature;
     private LocalDateTime timestamp;
 }

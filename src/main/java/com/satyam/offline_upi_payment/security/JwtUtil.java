@@ -6,7 +6,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
+import io.jsonwebtoken.Jws;
 import javax.crypto.SecretKey;
 
 @Component
@@ -29,6 +29,32 @@ public class JwtUtil {
                 ))
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    public String extractUsername(String token) {
+
+        Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return claims.getSubject();
+    }
+
+    public boolean validateToken(String token) {
+
+        try {
+            Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token);
+
+            return true;
+
+        } catch (Exception e) {
+            return false;
+        }
     }
 
 }

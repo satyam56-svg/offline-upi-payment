@@ -9,4 +9,5 @@ public class EncryptedPaymentRequest {
 
     private String encryptedKey;
 
+    private String iv;
 }

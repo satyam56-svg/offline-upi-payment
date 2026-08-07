@@ -57,4 +57,72 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(InvalidSignatureException.class)
+    public ResponseEntity<ApiResponse> handleInvalidSignature(
+            InvalidSignatureException ex
+    ) {
+
+        ApiResponse response = ApiResponse.builder()
+                .success(false)
+                .message(ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return new ResponseEntity<>(
+                response,
+                HttpStatus.UNAUTHORIZED
+        );
+    }
+
+    @ExceptionHandler(PacketExpiredException.class)
+    public ResponseEntity<ApiResponse> handlePacketExpired(
+            PacketExpiredException ex
+    ) {
+
+        ApiResponse response = ApiResponse.builder()
+                .success(false)
+                .message(ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return new ResponseEntity<>(
+                response,
+                HttpStatus.REQUEST_TIMEOUT
+        );
+    }
+
+    @ExceptionHandler(DuplicatePacketException.class)
+    public ResponseEntity<ApiResponse> handleDuplicatePacket(
+            DuplicatePacketException ex
+    ) {
+
+        ApiResponse response = ApiResponse.builder()
+                .success(false)
+                .message(ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return new ResponseEntity<>(
+                response,
+                HttpStatus.CONFLICT
+        );
+    }
+
+    @ExceptionHandler(SenderMismatchException.class)
+    public ResponseEntity<ApiResponse> handleSenderMismatch(
+            SenderMismatchException ex
+    ) {
+
+        ApiResponse response = ApiResponse.builder()
+                .success(false)
+                .message(ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return new ResponseEntity<>(
+                response,
+                HttpStatus.BAD_REQUEST
+        );
+    }
 }

@@ -16,8 +16,15 @@ public class User {
     private Long id;
     private String fullName;
     private String upiId;
+
+    @Lob
+    @Column(name = "public_key", columnDefinition = "LONGTEXT")
     private String publicKey;
     private String password;
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String privateKey;
 
     @JsonManagedReference
     @OneToOne(mappedBy = "user")

@@ -4,6 +4,7 @@ import com.satyam.offline_upi_payment.dto.WalletRequest;
 import com.satyam.offline_upi_payment.service.WalletService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 
@@ -19,8 +20,9 @@ public class WalletController {
             summary = "Check Wallet Balance",
             description = "Returns the current wallet balance of a user."
     )
-    @GetMapping("/balance/{upiId}")
-    public double getBalance(@PathVariable String upiId) {
+    @GetMapping("/balance")
+    public double getBalance(Authentication authentication) {
+        String upiId = authentication.getName();
         return walletService.getBalance(upiId);
     }
 
