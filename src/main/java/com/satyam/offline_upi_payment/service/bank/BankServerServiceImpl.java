@@ -7,8 +7,7 @@ import com.satyam.offline_upi_payment.dto.PaymentPacket;
 import com.satyam.offline_upi_payment.entity.Payment;
 import com.satyam.offline_upi_payment.entity.User;
 import com.satyam.offline_upi_payment.entity.Wallet;
-import com.satyam.offline_upi_payment.exception.InvalidSignatureException;
-import com.satyam.offline_upi_payment.exception.SenderMismatchException;
+import com.satyam.offline_upi_payment.exception.*;
 import com.satyam.offline_upi_payment.repository.PaymentRepository;
 import com.satyam.offline_upi_payment.repository.UserRepository;
 import com.satyam.offline_upi_payment.repository.WalletRepository;
@@ -53,7 +52,7 @@ public class BankServerServiceImpl implements BankServerService {
         String senderPublicKey = userRepository
                 .findByUpiId(packet.getSenderUpiId())
                 .orElseThrow(() ->
-                        new RuntimeException("Sender not found"))
+                        new UserNotFoundException("Sender not found"))
                 .getPublicKey();
 
         boolean isValid;
@@ -137,13 +136,13 @@ public class BankServerServiceImpl implements BankServerService {
         User sender = userRepository
                 .findByUpiId(payload.getSenderUpiId())
                 .orElseThrow(() ->
-                        new RuntimeException("Sender not found"));
+                        new UserNotFoundException("Sender not found"));
         log.info("👤 Sender verified : {}", sender.getUpiId());
 
         User receiver = userRepository
                 .findByUpiId(payload.getReceiverUpiId())
                 .orElseThrow(() ->
-                        new RuntimeException("Receiver not found"));
+                        new UserNotFoundException("Receiver not found"));
         log.info("👤 Receiver verified : {}", receiver.getUpiId());
 
         if (sender.getId().equals(receiver.getId())) {
@@ -171,7 +170,7 @@ public class BankServerServiceImpl implements BankServerService {
 
         if (payload.getAmount() <= 0) {
 
-            throw new RuntimeException(
+            throw new InvalidAmountException(
                     "Amount must be greater than zero"
             );
 
@@ -179,7 +178,7 @@ public class BankServerServiceImpl implements BankServerService {
 
         if (senderWallet.getBalance() < payload.getAmount()) {
 
-            throw new RuntimeException(
+            throw new InsufficientBalanceException(
                     "Insufficient balance"
             );
 
