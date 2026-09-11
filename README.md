@@ -35,29 +35,33 @@ This project simulates an Offline UPI Payment System with JWT Authentication, Wa
 - Swagger OpenAPI
 - Maven
 
-## 🏗️ System Architecture
+## 🏗️ System Architecture & Client-Side Non-Repudiation
 
 ```text
-                Client
-                   │
-                   ▼
-          Spring Security (JWT)
-                   │
-                   ▼
-             REST Controllers
-        ┌──────────┼──────────┐
-        ▼          ▼          ▼
-   User Service  Wallet Service  Payment Service
-        │          │          │
-        └──────────┼──────────┘
-                   ▼
-           Spring Data JPA
-                   │
-                   ▼
-                 MySQL
+               BROWSER CLIENT (React)                      SERVER (Spring Boot)
+       ┌─────────────────────────────────────┐      ┌─────────────────────────────┐
+       │ 1. Keygen: Web Crypto API           │      │                             │
+       │    - 2048-bit RSASSA-PKCS1-v1_5 SHA-256│      │                             │
+       │ 2. Save Private Key (non-extractable│      │                             │
+       │    CryptoKey) -> IndexedDB          │      │                             │
+       │ 3. Send SPKI Public Key ------------┼─────►│ Stores Public Key in DB     │
+       │                                     │      │ (No Private Key stored)     │
+       │ 4. Pay: Fetch Bank Public Key ◄─────┼──────│ GET /api/bank/public-key  │
+       │ 5. Encrypt Payload: AES-256-GCM      │      │                             │
+       │ 6. Wrap AES Key: RSA-OAEP SHA-256   │      │                             │
+       │ 7. Sign Payload: Web Crypto API     │      │                             │
+       │ 8. Send Pre-Signed PaymentPacket ───┼─────►│ Verify & Mesh Forward       │
+       └─────────────────────────────────────┘      └─────────────────────────────┘
 ```
 
-## 🔐 Hybrid Encryption Flow
+> [!WARNING]
+> **Important Database Schema Requirement**:
+> User private keys are generated and stored exclusively within browser **IndexedDB** as non-extractable `CryptoKey` objects. The `privateKey` column on the `User` entity has been dropped.
+> Deployments require a **fresh database instance** (or clearing existing user table rows) as legacy users registered under the server-custodial key model will not have a client-side private key in browser storage and must re-register.
+
+---
+
+## 🔐 Hybrid Encryption & Non-Repudiation Flow
 
 ```text
                     CLIENT
@@ -240,7 +244,61 @@ Swagger provides:
 - Endpoint Descriptions
 ```
 
+
+## 🔑 Bank RSA Key Persistence
+
+The bank server uses a 2048-bit RSA key pair to decrypt the AES keys that
+clients embed in each payment packet.
+
+### How it works
+
+On startup, `BankKeyManager` checks for PEM files at the paths configured in
+`application.properties`:
+
+```properties
+bank.key.public-path=./keys/bank_public.pem
+bank.key.private-path=./keys/bank_private.pem
+```
+
+| Scenario | Behaviour |
+|---|---|
+| **Both files exist** | Keys are loaded from disk — no new pair is generated |
+| **Either file is missing** | A fresh RSA key pair is generated and **both** files are written to disk |
+
+The `keys/` directory is listed in `.gitignore` so the files are never
+committed to source control.
+
+### ⚠️ Important: do not delete the keys directory carelessly
+
+Every payment packet carries an AES session key that was **encrypted with the
+bank's public key at the time the packet was created**. If you delete
+`keys/bank_private.pem` (or the whole `keys/` directory), the server will
+generate a brand-new key pair on the next restart and will be **permanently
+unable to decrypt any packet that was created before that restart**.
+
+Practically, this means:
+- Any in-flight or queued offline payment packets will fail with a decryption
+  error.
+- Only packets created *after* the restart (using the new public key) will
+  succeed.
+
+### 🏭 Production note
+
+> **These PEM files are a development-only convenience.**  
+> In a production or staging deployment you should replace `BankKeyManager`
+> with an integration that fetches and stores keys from a proper
+> **Key Management Service (KMS)** or **Hardware Security Module (HSM)** — for
+> example AWS KMS, Google Cloud KMS, Azure Key Vault, or HashiCorp Vault. A
+> real KMS provides:
+> - Encrypted key storage with access-control policies
+> - Automatic key rotation without service downtime
+> - Audit logging of every key usage
+> - No plaintext private key material on the filesystem
+
+---
+
 ## 🚀 Future Enhancements
+
 
 - Develop a React-based frontend
 - QR Code based UPI payments
